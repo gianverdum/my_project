@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from src.my_project.routers.members import router as members_router
-from .database import init_db
+from .database.database import init_db
 import logging
 
 # Configure logging to record application events
