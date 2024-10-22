@@ -24,5 +24,3 @@ def db():
 def override_get_db(db):
     # Override the get_db dependency to use the testing session
     yield db
-
-# Now you can use the override_get_db fixture in your tests
