@@ -51,3 +51,7 @@ def get_all_members(db: Session, name: str = None, club: str = None):
 
     # Execute the query and return the results
     return query.all()
+
+# Get member by ID
+def get_member_by_id(member_id: int, db: Session):
+    return db.query(MemberDB).filter(MemberDB.id == member_id).first()

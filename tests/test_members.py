@@ -138,3 +138,25 @@ def test_get_all_members_without_filters(override_get_db):
     # Assert that the response status code is 400 (Bad Request)
     assert response.status_code == 400
     assert response.json() == {"detail": "At least one filter ('name' or 'club') must be provided."}  # Validate the error message
+
+# Test case for retrieving members by ID
+def test_get_member_by_id(override_get_db):
+    # Create a member for testing
+    new_member = {"name": "John Doe", "phone": "11911112222", "club": "Rotary Club of Guarulhos"}
+    response = client.post("/members", json=new_member)
+
+    # Assuming the first member has ID 1
+    response = client.get("/members/1")
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": 1,
+        "name": "John Doe",
+        "phone": "11911112222",
+        "club": "Rotary Club of Guarulhos"
+    }
+
+#Test case for member not found
+def test_get_nonexistent_member(override_get_db):
+    response = client.get("/members/999") # ID 999 doesn't exist
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Member not found"}
