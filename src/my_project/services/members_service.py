@@ -1,19 +1,53 @@
 from fastapi import HTTPException
-from src.my_project.models.member import Member
+from sqlalchemy.orm import Session
+from src.my_project.models.member import Member  # Pydantic model
+from src.my_project.database.member_db import MemberDB  # SQLAlchemy model
+from src.my_project.database import SessionLocal
 
-# List to store members
-members_db = []
+# Dependency to get the database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-def create_member(member: Member):
-    # Verify if member exists comparing phone
-    if any(m["phone"] == member.phone for m in members_db):
-        raise HTTPException(status_code=409, detail="Member with this phone number already exists.")
+# Custom exception for duplicate members
+class DuplicateMemberException(Exception):
+    pass
 
-    new_id = len(members_db) + 1 #ID increment
-    member_with_id = member.model_dump() # Use Dict to get user data
-    member_with_id['id'] = new_id # Add ID to member
-    members_db.append(member_with_id) # Add new member to the list
-    return member_with_id
+# Create a new member
+def create_member(member: Member, db: Session):
+    # Check if the member already exists by phone number
+    existing_member = db.query(MemberDB).filter(MemberDB.phone == member.phone).first()
+    if existing_member:
+        raise DuplicateMemberException()  # Raise a custom exception for duplicates
 
-def get_all_members():
-    return members_db
+    # Create new member
+    new_member = MemberDB(
+        name=member.name,
+        phone=member.phone,
+        club=member.club
+    )
+    db.add(new_member)
+    db.commit()
+    db.refresh(new_member)  # Refresh to get the latest state from the DB
+    return new_member
+
+# Get members based on filters (name, club)
+def get_all_members(db: Session, name: str = None, club: str = None):
+    # Ensure at least one filter is provided
+    if not name and not club:
+        raise HTTPException(status_code=400, detail="At least one filter ('name' or 'club') must be provided.")
+
+    # Start the query on the SQLAlchemy model
+    query = db.query(MemberDB)
+
+    # Apply the filters dynamically
+    if name:
+        query = query.filter(MemberDB.name.ilike(f"%{name}%"))  # Case-insensitive search for name
+    if club:
+        query = query.filter(MemberDB.club.ilike(f"%{club}%"))  # Case-insensitive search for club
+
+    # Execute the query and return the results
+    return query.all()
