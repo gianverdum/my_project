@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from .database import init_db
+from src.my_project.routers.members import router as members_router
+from .database.database import init_db
 import logging
 
 # Configure logging to record application events
@@ -8,6 +9,9 @@ logger = logging.getLogger(__name__)
 
 # Create a FastAPI instance
 app = FastAPI()
+
+# Include the members router
+app.include_router(members_router)
 
 # Initialize the database and log the status
 try:

@@ -12,3 +12,6 @@ class Member(Base):
     name = Column(String(100), nullable=False)  # Member's name, cannot be null
     phone = Column(String(15), unique=True, nullable=False)  # Member's phone number, must be unique and cannot be null
     club = Column(String(100), nullable=False)  # Name of the club to which the member belongs, cannot be null
+
+# Ensure Base is available for import
+__all__ = ["Base", "Member"]
