@@ -1,10 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from my_project.schemas.member import Member  # Pydantic model
+from src.my_project.schemas.member import Member  # Pydantic model
 from src.my_project.database.member_db import MemberDB  # SQLAlchemy model
 from src.my_project.database import SessionLocal
-from src.my_project.models import MemberDB #SQLAlchemy Member model
-from src.my_project.schemas.member import Member
 
 # Dependency to get the database session
 def get_db():
@@ -37,7 +35,7 @@ def create_member(member: Member, db: Session):
     return new_member
 
 # Get members based on filters (name, club)
-def get_all_members(db: Session, name: str = None, club: str = None):
+def get_all_members(db: Session, name: str = None,phone: str = None, club: str = None):
     # Ensure at least one filter is provided
     if not name and not club:
         raise HTTPException(status_code=400, detail="At least one filter ('name' or 'club') must be provided.")
@@ -50,6 +48,8 @@ def get_all_members(db: Session, name: str = None, club: str = None):
         query = query.filter(MemberDB.name.ilike(f"%{name}%"))  # Case-insensitive search for name
     if club:
         query = query.filter(MemberDB.club.ilike(f"%{club}%"))  # Case-insensitive search for club
+    if phone:
+        query = query.filter(MemberDB.phone == phone) # Exact match phone
 
     # Execute the query and return the results
     return query.all()

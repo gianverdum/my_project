@@ -19,8 +19,12 @@ def add_member(member: Member, db: Session = Depends(get_db)):
 
 # GET endpoint to retrieve all members by filtering
 @router.get("/members", response_model=list[Member])
-def read_members(name: str = Query(None), club: str = Query(None), db: Session = Depends(get_db)):
-    return get_all_members(db, name, club)
+def read_members(
+    name: str = Query(None),
+    club: str = Query(None),
+    phone: str = Query(None),
+    db: Session = Depends(get_db)):
+    return get_all_members(db, name, phone, club)
 
 # GET /members/{id} endpoint to retrieve a member by ID
 @router.get("/members/{id}", response_model=Member)
