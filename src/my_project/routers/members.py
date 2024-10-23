@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from src.my_project.models.member import Member
-from src.my_project.services.members_service import create_member, get_all_members, get_db, DuplicateMemberException
+from src.my_project.services.members_service import create_member, get_all_members, get_db, DuplicateMemberException, get_member_by_id
 
 router = APIRouter()
 
@@ -21,3 +21,11 @@ def add_member(member: Member, db: Session = Depends(get_db)):
 @router.get("/members", response_model=list[Member])
 def read_members(name: str = Query(None), club: str = Query(None), db: Session = Depends(get_db)):
     return get_all_members(db, name, club)
+
+# GET /members/{id} endpoint to retrieve a member by ID
+@router.get("/members/{id}", response_model=Member)
+def read_member_by_id(id: int, db: Session = Depends(get_db)):
+    member = get_member_by_id(id, db)
+    if member is None:
+        raise HTTPException(status_code=404, detail="Member not found")
+    return member
