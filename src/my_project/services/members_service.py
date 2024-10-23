@@ -86,11 +86,10 @@ def update_member_service(db: Session, member_id: int, member_update: Member):
     return existing_member
 
 # Delete member
-async def delete_member(member_id: int):
-    async with Session() as session:
-        member = await session.get(Member, member_id)
-        if member:
-            await session.delete(member)
-            await session.commit()
-            return True
-        return False
+def delete_member(member_id: int, db: Session):
+    member = db.query(MemberDB).filter(MemberDB.id == member_id).first()
+    if member:
+        db.delete(member)
+        db.commit()
+        return True
+    return False
