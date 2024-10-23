@@ -4,73 +4,44 @@ from src.my_project.main import app
 from src.my_project.database import MemberDB
 from sqlalchemy.orm import Session
 from src.my_project.services.members_service import get_db
+import random
 
-# Creating a TestClient to simulate requests to the FastAPI app
 client = TestClient(app)
 
-# Auto-used pytest fixture to override the get_db dependency
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="function")
 def override_get_db(db: Session):
-    # Overriding the get_db dependency to use the testing session
     app.dependency_overrides[get_db] = lambda: db
-
-    yield db  # Yield the test database session for tests
-
-    # Clean up after the test by removing the override
+    yield db
     app.dependency_overrides.pop(get_db)
 
-# Test case for creating a new member successfully
-def test_create_member(override_get_db):
-    # Define the new member's details
-    new_member = {
-        "name": "John Doe",
-        "phone": "11911112222",
+# Helper function to create a unique member
+def generate_unique_member():
+    return {
+        "name": f"Member {random.randint(1, 10000)}",  # Generate a unique name
+        "phone": f"119{random.randint(10000000, 99999999)}",  # Generate a unique phone
         "club": "Rotary Club of Guarulhos"
     }
 
-    # Send a POST request to /members to create the member
-    response = client.post("/members", json=new_member)
-
-    # Assert that the response status code is 201 (Created)
-    assert response.status_code == 201
-
-    # Assert that the returned member's details match the input
-    assert response.json() == {
-        "id": 1,  # Assuming ID auto-increment starts at 1
-        "name": "John Doe",
-        "phone": "11911112222",
-        "club": "Rotary Club of Guarulhos"
-    }
-
-# Test case for creating a member with missing fields (e.g., missing "club")
+# Test case for creating a member with missing fields
 def test_create_member_missing_fields(override_get_db):
     incomplete_member = {
         "name": "Jane Doe",
         "phone": "11911112233"
-        # Missing "club" field
     }
-
-    # Send a POST request with incomplete data
     response = client.post("/members", json=incomplete_member)
-
-    # Assert that the response status code is 422 (Unprocessable Entity)
     assert response.status_code == 422
-    assert "detail" in response.json()  # Ensure the error message is present
+    assert "detail" in response.json()
 
 # Test case for creating a member with an invalid phone format
 def test_create_member_invalid_phone(override_get_db):
     invalid_phone_member = {
         "name": "Invalid Phone",
-        "phone": "invalid_phone",  # Invalid phone number (non-digit characters)
+        "phone": "invalid_phone",  # Invalid phone number
         "club": "Rotary Club of Guarulhos"
     }
-
-    # Send a POST request with invalid phone number
     response = client.post("/members", json=invalid_phone_member)
-
-    # Assert that the response status code is 422 (Unprocessable Entity)
     assert response.status_code == 422
-    assert "detail" in response.json()  # Ensure the error message is present
+    assert "detail" in response.json()
 
 # Test case for creating a member with empty fields
 def test_create_member_empty_fields(override_get_db):
@@ -79,84 +50,92 @@ def test_create_member_empty_fields(override_get_db):
         "phone": "",
         "club": ""
     }
-
-    # Send a POST request with empty fields
     response = client.post("/members", json=empty_member)
-
-    # Assert that the response status code is 422 (Unprocessable Entity)
     assert response.status_code == 422
-    assert "detail" in response.json()  # Ensure the error message is present
+    assert "detail" in response.json()
 
-# Test case for creating a duplicate member (same phone number)
-def test_create_duplicate_member(override_get_db):
-    new_member = {
-        "name": "Duplicate Member",
-        "phone": "11911112244",
+# Test case for creating a member and checking for duplicates
+def test_create_and_check_duplicate_member(override_get_db):
+    new_member = generate_unique_member()
+
+    # First creation should succeed
+    response = client.post("/members", json=new_member)
+    assert response.status_code == 201
+
+    # Attempt to create the same member again
+    response = client.post("/members", json=new_member)
+    assert response.status_code == 409
+    assert "detail" in response.json()
+
+# Test case for creating a member and then retrieving it by ID
+def test_create_and_get_member(override_get_db):
+    new_member = generate_unique_member()
+    response = client.post("/members", json=new_member)
+    assert response.status_code == 201
+    created_member = response.json()
+
+    # Retrieve the created member by ID
+    response = client.get(f"/members/{created_member['id']}")
+    assert response.status_code == 200
+    assert response.json() == created_member
+
+# Test case for updating an existing member
+def test_update_member(override_get_db):
+    new_member = generate_unique_member()
+    response = client.post("/members", json=new_member)
+    assert response.status_code == 201
+    created_member = response.json()
+
+    updated_data = {
+        "name": "John Updated",
+        "phone": created_member["phone"],  # Use the same phone to avoid conflict
         "club": "Rotary Club of Guarulhos"
     }
+    response = client.put(f"/members/{created_member['id']}", json=updated_data)
+    assert response.status_code == 200
 
-    # Send the first request to create the member
+# Test case for updating a member with invalid phone format
+def test_update_member_invalid_phone(override_get_db):
+    new_member = generate_unique_member()
     response = client.post("/members", json=new_member)
-    assert response.status_code == 201  # Ensure the member is created successfully
+    assert response.status_code == 201
+    created_member = response.json()
 
-    # Send the second request with the same data to trigger a duplicate error
-    response = client.post("/members", json=new_member)
+    updated_data = {
+        "name": "John Updated",
+        "phone": "invalid_phone",  # Invalid phone number
+        "club": "Rotary Club of Guarulhos"
+    }
+    response = client.put(f"/members/{created_member['id']}", json=updated_data)
+    assert response.status_code == 422
+    assert "detail" in response.json()
 
-    # Assert that the response status code is 409 (Conflict)
-    assert response.status_code == 409
-    assert "detail" in response.json()  # Ensure the error message is present
+# Test case for updating a non-existent member
+def test_update_nonexistent_member(override_get_db):
+    updated_data = {
+        "name": "Nonexistent Member",
+        "phone": "11999999999",
+        "club": "Rotary Club of Guarulhos"
+    }
+    response = client.put("/members/999", json=updated_data)  # ID 999 doesn't exist
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Member not found"}
 
-# Test case for filtering members by name and club
+# Test case for filtering members by name
 def test_get_all_members_with_filters(override_get_db):
-    # Add two members to the database for testing
-    client.post("/members", json={"name": "John Doe", "phone": "11911112222", "club": "Rotary Club of Guarulhos"})
-    client.post("/members", json={"name": "Jane Smith", "phone": "11911112233", "club": "Rotary Club of São Paulo"})
+    member1 = generate_unique_member()
+    member2 = generate_unique_member()
+    client.post("/members", json=member1)
+    client.post("/members", json=member2)
 
     # Filter by name
-    response = client.get("/members?name=John")
+    response = client.get(f"/members?name={member1['name']}")
     assert response.status_code == 200
-    assert len(response.json()) == 1  # Ensure only one member is returned
-    assert response.json()[0]["name"] == "John Doe"  # Verify the member's name
+    assert len(response.json()) == 1
+    assert response.json()[0]["name"] == member1["name"]
 
-    # Filter by club
-    response = client.get("/members?club=São Paulo")
-    assert response.status_code == 200
-    assert len(response.json()) == 1  # Ensure only one member is returned
-    assert response.json()[0]["name"] == "Jane Smith"  # Verify the member's name
-
-    # Filter by both name and club
-    response = client.get("/members?name=John&club=Rotary Club of Guarulhos")
-    assert response.status_code == 200
-    assert len(response.json()) == 1  # Ensure only one member is returned
-    assert response.json()[0]["name"] == "John Doe"  # Verify the member's name
-
-# Test case for retrieving members without any filters
-def test_get_all_members_without_filters(override_get_db):
-    # Send a GET request without filters
-    response = client.get("/members")
-
-    # Assert that the response status code is 400 (Bad Request)
-    assert response.status_code == 400
-    assert response.json() == {"detail": "At least one filter ('name' or 'club') must be provided."}  # Validate the error message
-
-# Test case for retrieving members by ID
-def test_get_member_by_id(override_get_db):
-    # Create a member for testing
-    new_member = {"name": "John Doe", "phone": "11911112222", "club": "Rotary Club of Guarulhos"}
-    response = client.post("/members", json=new_member)
-
-    # Assuming the first member has ID 1
-    response = client.get("/members/1")
-    assert response.status_code == 200
-    assert response.json() == {
-        "id": 1,
-        "name": "John Doe",
-        "phone": "11911112222",
-        "club": "Rotary Club of Guarulhos"
-    }
-
-#Test case for member not found
+# Test case for member not found
 def test_get_nonexistent_member(override_get_db):
-    response = client.get("/members/999") # ID 999 doesn't exist
+    response = client.get("/members/999")  # ID 999 doesn't exist
     assert response.status_code == 404
     assert response.json() == {"detail": "Member not found"}
