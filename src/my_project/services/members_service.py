@@ -84,3 +84,13 @@ def update_member_service(db: Session, member_id: int, member_update: Member):
     db.refresh(existing_member) # Refresh to get updated data from the database
 
     return existing_member
+
+# Delete member
+async def delete_member(member_id: int):
+    async with Session() as session:
+        member = await session.get(Member, member_id)
+        if member:
+            await session.delete(member)
+            await session.commit()
+            return True
+        return False

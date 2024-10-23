@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from my_project.schemas.member import Member, MemberDB
-from src.my_project.services.members_service import create_member, get_all_members, get_db, DuplicateMemberException, get_member_by_id, update_member_service
+from src.my_project.services.members_service import create_member, get_all_members, get_db, DuplicateMemberException, get_member_by_id, update_member_service, delete_member
 
 router = APIRouter()
 
@@ -51,3 +51,11 @@ def update_member(id: int, member_update: Member, db: Session = Depends(get_db))
         raise HTTPException(status_code=404, detail="Member not found")
 
     return updated_member
+
+# DELETE endpoint
+@router.delete("/members/{id}", response_description="Delete a member")
+async def delete_member_endpoint(id: int):
+    success = await delete_member(id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Member not found")
+    return {"message": "Member deleted successfully"}
