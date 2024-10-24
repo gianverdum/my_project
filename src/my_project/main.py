@@ -1,8 +1,9 @@
-# main.py
-from fastapi import FastAPI
-from src.my_project.routers.members import router as members_router
-from src.my_project.database.database import init_db, engine
 import logging
+
+from fastapi import FastAPI
+
+from src.my_project.database.database import engine, init_db
+from src.my_project.routers.members import router as members_router
 
 # Configure logging to record application events
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +24,6 @@ except Exception as e:
 
 
 # Define the root endpoint
-@app.get("/")
-def read_root():
+@app.get("/", response_model=dict)
+def read_root() -> dict:
     return {"message": "Welcome to the Rotary Club API!"}

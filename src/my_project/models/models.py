@@ -7,12 +7,12 @@ Base = declarative_base()
 
 # Define the Member model
 class Member(Base):
-    __tablename__ = 'members'
+    __tablename__ = "members"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    phone = Column(String(15), unique=True, nullable=False)
-    club = Column(String(100), nullable=False)
+    id: int = Column(Integer, primary_key=True, index=True)
+    name: str = Column(String(100), nullable=False)
+    phone: str = Column(String(15), unique=True, nullable=False)
+    club: str = Column(String(100), nullable=False)
 
 
 # Ensure Base is available for import

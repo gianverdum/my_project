@@ -1,16 +1,16 @@
 import logging
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+
 from src.my_project.schemas.member import Member, MemberDB
-from src.my_project.services.members_service import (
-    create_member,
-    delete_member,
-    get_all_members,
-    get_db,
-    DuplicateMemberException,
-    get_member_by_id,
-    update_member_service
-)
+from src.my_project.services.members_service import (DuplicateMemberException,
+                                                     create_member,
+                                                     delete_member,
+                                                     get_all_members, get_db,
+                                                     get_member_by_id,
+                                                     update_member_service)
 
 router = APIRouter()
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # POST endpoint to create a new member
 @router.post("/members", response_model=Member, status_code=201)
-def add_member(member: Member, db: Session = Depends(get_db)):
+def add_member(member: Member, db: Session = Depends(get_db)) -> Member:
     logger.info(f"Adding new member: {member}")
     try:
         created_member = create_member(member, db)
@@ -38,21 +38,25 @@ def add_member(member: Member, db: Session = Depends(get_db)):
 
 
 # GET endpoint to retrieve all members by filtering
-@router.get("/members", response_model=list[Member])
+@router.get("/members", response_model=List[Member])
 def read_members(
-    name: str = Query(None),
-    club: str = Query(None),
-    phone: str = Query(None),
-    db: Session = Depends(get_db)
-):
-    logger.info("Retrieving members with filters "
-                "- Name: %s, Club: %s, Phone: %s", name, club, phone)
+    name: Optional[str] = Query(None),
+    club: Optional[str] = Query(None),
+    phone: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+) -> List[Member]:
+    logger.info(
+        "Retrieving members with filters " "- Name: %s, Club: %s, Phone: %s",
+        name,
+        club,
+        phone,
+    )
     return get_all_members(db, name, phone, club)
 
 
 # GET /members/{id} endpoint to retrieve a member by ID
 @router.get("/members/{id}", response_model=Member)
-def read_member_by_id(id: int, db: Session = Depends(get_db)):
+def read_member_by_id(id: int, db: Session = Depends(get_db)) -> Member:
     logger.info(f"Retrieving member by ID: {id}")
     member = get_member_by_id(id, db)
     if member is None:
@@ -64,10 +68,8 @@ def read_member_by_id(id: int, db: Session = Depends(get_db)):
 # PUT endpoint to update members
 @router.put("/members/{id}", response_model=MemberDB)
 def update_member(
-    id: int,
-    member_update: Member,
-    db: Session = Depends(get_db)
-):
+    id: int, member_update: Member, db: Session = Depends(get_db)
+) -> MemberDB:
     logger.info(f"Updating member ID: {id} with data: {member_update}")
     updated_member = update_member_service(db, id, member_update)
 
@@ -81,7 +83,7 @@ def update_member(
 
 # DELETE endpoint
 @router.delete("/members/{id}", response_description="Delete a member")
-def delete_member_endpoint(id: int, db: Session = Depends(get_db)):
+def delete_member_endpoint(id: int, db: Session = Depends(get_db)) -> dict:
     logger.info(f"Deleting member ID: {id}")
     success = delete_member(id, db)
     if not success:
