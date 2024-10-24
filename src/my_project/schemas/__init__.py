@@ -1,1 +1,1 @@
-from my_project.schemas import member
+from my_project.schemas import member  # noqa: F401

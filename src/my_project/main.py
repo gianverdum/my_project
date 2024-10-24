@@ -1,7 +1,7 @@
 # main.py
 from fastapi import FastAPI
-from .routers.members import router as members_router
-from .database.database import init_db, engine  # Import the engine
+from src.my_project.routers.members import router as members_router
+from src.my_project.database.database import init_db, engine
 import logging
 
 # Configure logging to record application events
@@ -16,12 +16,13 @@ app.include_router(members_router)
 
 # Initialize the database and log the status
 try:
-    init_db(engine)  # Pass the engine to initialize the database
-    logger.info("Database initialized and tables created.")  # Log success message
+    init_db(engine)
+    logger.info("Database initialized and tables created.")
 except Exception as e:
-    logger.error(f"Error initializing the database: {e}")  # Log any errors encountered
+    logger.error(f"Error initializing the database: {e}")
+
 
 # Define the root endpoint
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the Rotary Club API!"}  # Return welcome message
+    return {"message": "Welcome to the Rotary Club API!"}
