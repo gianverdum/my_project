@@ -139,3 +139,15 @@ def test_get_nonexistent_member(override_get_db):
     response = client.get("/members/999")  # ID 999 doesn't exist
     assert response.status_code == 404
     assert response.json() == {"detail": "Member not found"}
+
+# Test case for delete an existent member
+def test_delete_member_success():
+    response = client.delete("/members/1")  # Replace with a valid member ID
+    assert response.status_code == 200
+    assert response.json() == {"message": "Member deleted successfully"}
+
+# Test case for delete an inexistent member
+def test_delete_member_not_found():
+    response = client.delete("/members/9999")  # Replace with an invalid member ID
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Member not found"}

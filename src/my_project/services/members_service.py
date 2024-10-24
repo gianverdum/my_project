@@ -84,3 +84,12 @@ def update_member_service(db: Session, member_id: int, member_update: Member):
     db.refresh(existing_member) # Refresh to get updated data from the database
 
     return existing_member
+
+# Delete member
+def delete_member(member_id: int, db: Session):
+    member = db.query(MemberDB).filter(MemberDB.id == member_id).first()
+    if member:
+        db.delete(member)
+        db.commit()
+        return True
+    return False
