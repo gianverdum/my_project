@@ -1,4 +1,5 @@
 {
+    "version": 2,
     "builds": [
         {
             "src": "src/my_project/main.py",
@@ -10,5 +11,8 @@
             "src": "/(.*)",
             "dest": "src/my_project/main.py"
         }
-    ]
+    ],
+    "env": {
+        "PYTHONPATH": "src/"
+    }
 }
