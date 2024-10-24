@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from my_project.schemas.member import Member, MemberDB
-from src.my_project.services.members_service import (
+from ..schemas.member import Member, MemberDB
+from ..services.members_service import (
     create_member,
     delete_member,
     get_all_members,

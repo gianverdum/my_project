@@ -1,6 +1,7 @@
+# main.py
 from fastapi import FastAPI
-from src.my_project.routers.members import router as members_router
-from .database.database import init_db
+from .routers.members import router as members_router
+from .database.database import init_db, engine  # Import the engine
 import logging
 
 # Configure logging to record application events
@@ -15,7 +16,7 @@ app.include_router(members_router)
 
 # Initialize the database and log the status
 try:
-    init_db()  # Call the function to initialize the database
+    init_db(engine)  # Pass the engine to initialize the database
     logger.info("Database initialized and tables created.")  # Log success message
 except Exception as e:
     logger.error(f"Error initializing the database: {e}")  # Log any errors encountered
