@@ -1,6 +1,7 @@
 # src/my_project/schemas/member.py
 
 from typing import Optional, Type
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
