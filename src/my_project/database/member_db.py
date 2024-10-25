@@ -1,7 +1,17 @@
+# src/my_project/database/member_db.py
+
+import logging  # Import logging
 from typing import Any, Dict
 
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import declarative_base
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)  # Set the logging level
+logger = logging.getLogger(__name__)  # Create a logger for this module
+
+logger.info("Loading member_db.py")  # Log the message
+
 
 # Base class for the SQLAlchemy models
 Base = declarative_base()

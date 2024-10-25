@@ -1,10 +1,12 @@
+# src/my_project/tests/conftest.py
+
 from typing import Generator
 
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from src.my_project.models import Base
+from src.my_project.models import Base  # Ensure this import points correctly
 
 # Setup for the test database
 SQLALCHEMY_DATABASE_URL: str = "sqlite:///./test.db"
