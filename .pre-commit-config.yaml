@@ -15,7 +15,9 @@ repos:
     rev: v1.13.0
     hooks:
     - id: mypy
-      args: ["--explicit-package-bases"]
+      files: ^(src/|tests/)
+      additional_dependencies:
+        - "pydantic>=1.10.4"
 
   - repo: https://github.com/pre-commit/mirrors-isort
     rev: v5.10.1

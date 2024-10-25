@@ -30,6 +30,7 @@ dev = [
 pythonpath = ["src"]
 
 [tool.mypy]
+packages = ["src"]
 plugins = [
     "pydantic.mypy"
 ]
