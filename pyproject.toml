@@ -24,6 +24,7 @@ dev = [
     "pytest>=8.3.3",
     "pre-commit>=4.0.1",
     "mypy>=1.13.0",
+    "isort>=5.10.0"
 ]
 
 [tool.pytest.ini_options]
@@ -46,3 +47,11 @@ disallow_untyped_defs = true
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+# isort configuration
+[tool.isort]
+profile = "black"  # Use black's configuration for consistent formatting
+line_length = 88    # Set line length to match black's default
+known_third_party = ["fastapi", "sqlalchemy"]  # Specify third-party packages
+default_section = "THIRDPARTY"  # Grouping for imports
+skip = []  # Add any directories/files you want to skip

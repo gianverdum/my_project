@@ -1,7 +1,11 @@
 # src/main.py
 from fastapi import FastAPI
 
+from src.database import engine
+from src.models.member import Base
 from src.routers.member_router import router as member_router
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
