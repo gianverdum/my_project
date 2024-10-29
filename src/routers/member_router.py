@@ -1,4 +1,6 @@
 # src/routers/member_router.py
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,8 @@ from src.services.member_services import (
 
 router = APIRouter()
 
+logging.basicConfig(level=logging.INFO)
+
 
 @router.post("/members/", response_model=MemberRead)
 def add_member(member: MemberCreate, db: Session = Depends(get_db)) -> MemberRead:
@@ -21,9 +25,11 @@ def add_member(member: MemberCreate, db: Session = Depends(get_db)) -> MemberRea
 
 
 @router.get("/members/", response_model=list[MemberRead])
-def list_members(db: Session = Depends(get_db)) -> list[MemberRead]:
-    members = get_members(db)
-    return [MemberRead.from_orm(member) for member in members]
+def list_members(
+    skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
+) -> list[MemberRead]:
+    members = get_members(db, skip=skip, limit=limit)
+    return [MemberRead.model_validate(member) for member in members]
 
 
 @router.get("/members/{id}", response_model=MemberRead)
@@ -44,9 +50,8 @@ def modify_member(
     return member
 
 
-@router.delete("/members/{id}", response_model=dict)
-def remove_member(id: int, db: Session = Depends(get_db)) -> dict[str, str]:
+@router.delete("/members/{id}", status_code=204)
+def remove_member(id: int, db: Session = Depends(get_db)) -> None:
     success = delete_member(db, id)
     if not success:
         raise HTTPException(status_code=404, detail="Member not found")
-    return {"message": "Member deleted successfully"}
