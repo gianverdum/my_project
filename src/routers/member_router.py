@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from src.database import get_db
-from src.schemas.member import MemberCreate, MemberRead
+from src.schemas.member import MemberCreate, MemberRead, MemberUpdate
 from src.services.member_services import (
     create_member,
     delete_member,
@@ -42,7 +42,7 @@ def get_member(id: int, db: Session = Depends(get_db)) -> MemberRead:
 
 @router.put("/members/{id}", response_model=MemberRead)
 def modify_member(
-    id: int, updated_member: MemberCreate, db: Session = Depends(get_db)
+    id: int, updated_member: MemberUpdate, db: Session = Depends(get_db)
 ) -> MemberRead:
     member = update_member(db, id, updated_member)
     if not member:

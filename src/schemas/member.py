@@ -1,4 +1,6 @@
 # src/schemas/member.py
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -16,3 +18,9 @@ class MemberRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class MemberUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    club: Optional[str] = None
