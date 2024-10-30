@@ -14,8 +14,6 @@ load_dotenv()
 
 # Access your database URL from environment variables
 POSTGRES_URL = os.getenv("POSTGRES_URL")
-# If you need to use other environment variables, you can access them similarly
-# e.g., SUPABASE_URL = os.getenv("SUPABASE_URL")
 
 # Create all database tables
 Base.metadata.create_all(bind=engine)
