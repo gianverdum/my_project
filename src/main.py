@@ -1,19 +1,15 @@
-import os
-
+# src/main.py
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.database import engine
+from src.database import engine  # Using `engine` from `src/database.py`
 from src.models.member import Base
 from src.routers.member_router import router as member_router
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Access your database URL from environment variables
-POSTGRES_URL = os.getenv("POSTGRES_URL")
 
 # Create all database tables
 Base.metadata.create_all(bind=engine)
