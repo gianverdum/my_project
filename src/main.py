@@ -1,5 +1,4 @@
 import os
-import psycopg2
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
@@ -49,17 +48,8 @@ app.include_router(member_router, prefix="/api", tags=["members"])
 
 # Global exception handler for HTTP exceptions
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request,
-                                 exc: HTTPException) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content={"message": exc.detail},
     )
-
-
-def get_db_connection():
-    try:
-        connection = psycopg2.connect(POSTGRES_URL)
-        return connection
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
