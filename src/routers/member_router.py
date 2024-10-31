@@ -21,6 +21,19 @@ logging.basicConfig(level=logging.INFO)
 
 @router.post("/members/", response_model=MemberRead)
 def add_member(member: MemberCreate, db: Session = Depends(get_db)) -> MemberRead:
+    """
+    Create a new member entry in the database.
+
+    Args:
+        member (MemberCreate): Data required to create a new member.
+        db (Session, optional): Database session dependency.
+
+    Returns:
+        MemberRead: The newly created member record.
+
+    Raises:
+        HTTPException: If a database or server error occurs.
+    """
     return create_member(db, member)
 
 
@@ -28,12 +41,41 @@ def add_member(member: MemberCreate, db: Session = Depends(get_db)) -> MemberRea
 def list_members(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
 ) -> list[MemberRead]:
+    """
+    Retrieve a list of members from the database.
+
+    Args:
+        skip (int, optional): Number of records to skip \
+            for pagination (default is 0).
+        limit (int, optional): Maximum number of records \
+            to return (default is 10).
+        db (Session, optional): Database session dependency.
+
+    Returns:
+        list[MemberRead]: A list of member records.
+
+    Raises:
+        HTTPException: If a database or server error occurs.
+    """
     members = get_members(db, skip=skip, limit=limit)
     return [MemberRead.model_validate(member) for member in members]
 
 
 @router.get("/members/{id}", response_model=MemberRead)
 def get_member(id: int, db: Session = Depends(get_db)) -> MemberRead:
+    """
+    Retrieve a specific member by ID.
+
+    Args:
+        id (int): The ID of the member to retrieve.
+        db (Session, optional): Database session dependency.
+
+    Returns:
+        MemberRead: The member record if found.
+
+    Raises:
+        HTTPException: If the member is not found.
+    """
     member = get_member_by_id(db, id)
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
@@ -44,6 +86,20 @@ def get_member(id: int, db: Session = Depends(get_db)) -> MemberRead:
 def modify_member(
     id: int, updated_member: MemberUpdate, db: Session = Depends(get_db)
 ) -> MemberRead:
+    """
+    Update an existing member's information.
+
+    Args:
+        id (int): The ID of the member to update.
+        updated_member (MemberUpdate): Data to update the member with.
+        db (Session, optional): Database session dependency.
+
+    Returns:
+        MemberRead: The updated member record.
+
+    Raises:
+        HTTPException: If the member is not found.
+    """
     member = update_member(db, id, updated_member)
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
@@ -52,6 +108,16 @@ def modify_member(
 
 @router.delete("/members/{id}", status_code=204)
 def remove_member(id: int, db: Session = Depends(get_db)) -> None:
+    """
+    Delete a member from the database.
+
+    Args:
+        id (int): The ID of the member to delete.
+        db (Session, optional): Database session dependency.
+
+    Raises:
+        HTTPException: If the member is not found.
+    """
     success = delete_member(db, id)
     if not success:
         raise HTTPException(status_code=404, detail="Member not found")

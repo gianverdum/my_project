@@ -29,12 +29,24 @@ app.add_middleware(
 # Health check endpoint
 @app.get("/health")
 def health_check() -> dict[str, str]:
+    """
+    Checks the API's health status.
+
+    Returns:
+        dict[str, str]: A JSON object indicating the API is operational.
+    """
     return {"status": "OK"}
 
 
 # Root endpoint
 @app.get("/", summary="Root endpoint", response_description="Welcome message")
 def read_root() -> dict[str, str]:
+    """
+    Root endpoint providing a welcome message.
+
+    Returns:
+        dict[str, str]: A JSON welcome message.
+    """
     return {"message": "Welcome to the members API!"}
 
 
@@ -45,6 +57,17 @@ app.include_router(member_router, prefix="/api", tags=["members"])
 # Global exception handler for HTTP exceptions
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """
+    Handles HTTP exceptions across the application,\
+        returning a JSON error response.
+
+    Args:
+        request (Request): The incoming request.
+        exc (HTTPException): The HTTP exception raised.
+
+    Returns:
+        JSONResponse: JSON response with error details.
+    """
     return JSONResponse(
         status_code=exc.status_code,
         content={"message": exc.detail},
