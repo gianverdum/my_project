@@ -5,6 +5,19 @@ from src.database import Base
 
 
 class Member(Base):
+    """
+    SQLAlchemy model for the members table.
+
+    Attributes:
+        id (int): Unique identifier for each member.
+        name (str): Name of the member.
+        phone (str): Phone number of the member, unique to prevent duplicates.
+        club (str): The club associated with the member.
+
+    Constraints:
+        uq_phone: Enforces a unique constraint on the phone field.
+    """
+
     __tablename__ = "members"
     __table_args__ = (UniqueConstraint("phone", name="uq_phone"),)
 

@@ -30,7 +30,12 @@ Base = declarative_base()
 
 
 def get_db() -> Generator[Session, None, None]:
-    """Dependency to provide a SQLAlchemy session."""
+    """
+    Dependency to provide a SQLAlchemy session for database operations.
+
+    Yields:
+        Session: A database session to be used within request scopes.
+    """
     db = SessionLocal()
     try:
         yield db
