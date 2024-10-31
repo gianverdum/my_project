@@ -9,6 +9,15 @@ class MemberCreate(BaseModel):
     phone: str
     club: str
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "John Doe",
+                "phone": "11912345678",
+                "club": "Rotary Club of City",
+            }
+        }
+
 
 class MemberRead(BaseModel):
     id: int
@@ -18,9 +27,25 @@ class MemberRead(BaseModel):
 
     class Config:
         from_attributes = True
+        schema_extra = {
+            "example": {
+                "name": "John Doe",
+                "phone": "11912345678",
+                "club": "Rotary Club of City",
+            }
+        }
 
 
 class MemberUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     club: Optional[str] = None
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "John Doe",
+                "phone": "11912345678",
+                "club": "Rotary Club of City",
+            }
+        }

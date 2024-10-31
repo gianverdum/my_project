@@ -14,7 +14,17 @@ load_dotenv()
 # Create all database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(
+    title="My Project API",
+    description="This API allows managing members.",
+    version="1.0.0",
+    openapi_tags=[
+        {
+            "name": "Members",
+            "description": "Operations with members.",
+        },
+    ],
+)
 
 # CORS middleware
 app.add_middleware(

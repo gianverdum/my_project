@@ -19,7 +19,14 @@ router = APIRouter()
 logging.basicConfig(level=logging.INFO)
 
 
-@router.post("/members/", response_model=MemberRead)
+@router.post(
+    "/members/",
+    response_model=MemberRead,
+    summary="Create a new member",
+    description="This endpoint allows you to create a \
+        new member in the database",
+    tags=["Members"],
+)
 def add_member(member: MemberCreate, db: Session = Depends(get_db)) -> MemberRead:
     """
     Create a new member entry in the database.
@@ -37,7 +44,14 @@ def add_member(member: MemberCreate, db: Session = Depends(get_db)) -> MemberRea
     return create_member(db, member)
 
 
-@router.get("/members/", response_model=list[MemberRead])
+@router.get(
+    "/members/",
+    response_model=list[MemberRead],
+    summary="Retrieve a list of members",
+    description="Fetch a list of members with optional\
+        pagination.",
+    tags=["Members"],
+)
 def list_members(
     skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
 ) -> list[MemberRead]:
@@ -61,7 +75,14 @@ def list_members(
     return [MemberRead.model_validate(member) for member in members]
 
 
-@router.get("/members/{id}", response_model=MemberRead)
+@router.get(
+    "/members/{id}",
+    response_model=MemberRead,
+    summary="Retrieve a specific member by ID",
+    description="Fetch a member's details using their\
+        unique ID.",
+    tags=["Members"],
+)
 def get_member(id: int, db: Session = Depends(get_db)) -> MemberRead:
     """
     Retrieve a specific member by ID.
@@ -82,7 +103,13 @@ def get_member(id: int, db: Session = Depends(get_db)) -> MemberRead:
     return member
 
 
-@router.put("/members/{id}", response_model=MemberRead)
+@router.put(
+    "/members/{id}",
+    response_model=MemberRead,
+    summary="Update an existing member's information",
+    description="Modify the details of an existing member.",
+    tags=["Members"],
+)
 def modify_member(
     id: int, updated_member: MemberUpdate, db: Session = Depends(get_db)
 ) -> MemberRead:
@@ -106,7 +133,14 @@ def modify_member(
     return member
 
 
-@router.delete("/members/{id}", status_code=204)
+@router.delete(
+    "/members/{id}",
+    status_code=204,
+    summary="Delete a member",
+    description="Remove a member from the database using\
+        their ID.",
+    tags=["Members"],
+)
 def remove_member(id: int, db: Session = Depends(get_db)) -> None:
     """
     Delete a member from the database.
