@@ -10,7 +10,7 @@ class MemberCreate(BaseModel):
     club: str
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "name": "John Doe",
                 "phone": "11912345678",
@@ -27,7 +27,7 @@ class MemberRead(BaseModel):
 
     class Config:
         from_attributes = True
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "name": "John Doe",
                 "phone": "11912345678",
@@ -42,7 +42,7 @@ class MemberUpdate(BaseModel):
     club: Optional[str] = None
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "name": "John Doe",
                 "phone": "11912345678",
