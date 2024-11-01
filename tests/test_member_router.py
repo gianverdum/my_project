@@ -123,32 +123,81 @@ def test_member_creation_missing_required_fields(test_client: TestClient, db_ses
 
     # Arrange
     missing_name = {
-        "phone": "phone",
+        "phone": "11912345678",
         "club": "Rotary Club of Guarulhos",
     }
     missing_phone = {
-        "name": "Duplicate phone",
+        "name": "John Doe",
         "club": "Rotary Club of Guarulhos",
     }
     missing_club = {
-        "name": "Duplicate phone",
-        "phone": "phone",
+        "name": "John Doe",
+        "phone": "11912345678",
     }
 
-    # Act
+    # Act & Assert
     response1 = test_client.post("/api/members", json=missing_name)
-    response2 = test_client.post("/api/members", json=missing_phone)
-    response3 = test_client.post("/api/members", json=missing_club)
-
-    # Assert
     assert response1.status_code == 422
-    assert response1.json().get("detail")[0]["msg"] == "Field required"
-    assert response1.json().get("detail")[0]["loc"] == ["body", "name"]
+    assert response1.json()["detail"][0]["msg"] == "Field required"
+    assert response1.json()["detail"][0]["loc"] == ["body", "name"]
 
+    response2 = test_client.post("/api/members", json=missing_phone)
     assert response2.status_code == 422
-    assert response2.json().get("detail")[0]["msg"] == "Field required"
-    assert response2.json().get("detail")[0]["loc"] == ["body", "phone"]
+    assert response2.json()["detail"][0]["msg"] == "Field required"
+    assert response2.json()["detail"][0]["loc"] == ["body", "phone"]
 
+    response3 = test_client.post("/api/members", json=missing_club)
     assert response3.status_code == 422
-    assert response3.json().get("detail")[0]["msg"] == "Field required"
-    assert response3.json().get("detail")[0]["loc"] == ["body", "club"]
+    assert response3.json()["detail"][0]["msg"] == "Field required"
+    assert response3.json()["detail"][0]["loc"] == ["body", "club"]
+
+
+def test_member_creation_invalid_name_format(test_client: TestClient, db_session: Session) -> None:
+    """Validates that it's not possible to add a new member with an invalid name format via POST request."""
+
+    invalid_name_data = {
+        "name": "John",  # Invalid: should contain both first and last names
+        "phone": "11912345678",
+        "club": "Rotary Club of Guarulhos",
+    }
+
+    response = test_client.post("/api/members", json=invalid_name_data)
+    assert response.status_code == 422
+    details = response.json().get("detail")
+    assert any(
+        "name" in error["loc"] and "Name must contain at least a first name and a last name" in error["msg"]
+        for error in details
+    )
+
+
+def test_member_creation_invalid_phone_format(test_client: TestClient, db_session: Session) -> None:
+    """Validates that it's not possible to add a new member with an invalid phone format via POST request."""
+
+    invalid_phone_data = {
+        "name": "John Doe",
+        "phone": "123",  # Invalid: should have 11 digits
+        "club": "Rotary Club of Guarulhos",
+    }
+
+    response = test_client.post("/api/members", json=invalid_phone_data)
+    assert response.status_code == 422
+    details = response.json().get("detail")
+    assert any(
+        "phone" in error["loc"] and "Phone number must have exactly 11 digits and contain only numbers" in error["msg"]
+        for error in details
+    )
+
+
+def test_member_creation_empty_club(test_client: TestClient, db_session: Session) -> None:
+    """Validates that it's not possible to add a new member with an empty club field via POST request."""
+
+    empty_club_data = {
+        "name": "John Doe",
+        "phone": "11912345678",
+        "club": "",  # Invalid: should not be empty
+    }
+
+    response = test_client.post("/api/members", json=empty_club_data)
+    assert response.status_code == 422
+    details = response.json().get("detail")
+    assert any("club" in error["loc"] and "Club field must not be empty" in error["msg"] for error in details)
