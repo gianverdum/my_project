@@ -47,7 +47,8 @@ def db_session() -> Generator[Session, None, None]:
     yield session  # This is where the tests run
 
     session.close()
-    transaction.rollback()  # Roll back the transaction
+    if transaction.is_active:
+        transaction.rollback()  # Roll back the transaction
     connection.close()
 
 
@@ -70,24 +71,54 @@ def generate_unique_member() -> Dict[str, str]:
     }
 
 
-def test_add_member(
-    test_client: TestClient, db_session: Session
-) -> None:  # Added type annotations
-    """Test the addition of a new member."""
-    # Define the member data to send in the POST request
+def test_member_creation_success(test_client: TestClient, db_session: Session) -> None:
+    """Validates that a new member can be added successfully via POST request.
+
+    This test sends member data, checks that the response status is 200,
+    verifies the returned data matches the input (excluding ID),
+    and confirms the presence and type of the member ID.
+    """
+    # Arrange
     member_data = generate_unique_member()
 
+    # Act
     response = test_client.post("/api/members/", json=member_data)
 
+    # Assert
     assert response.status_code == 200
     response_data = response.json()
-
-    # Check that the response contains the same data we sent, excluding the ID
     assert response_data["club"] == member_data["club"]
     assert response_data["name"] == member_data["name"]
     assert response_data["phone"] == member_data["phone"]
+    assert (
+        "id" in response_data
+        and isinstance(response_data["id"], int)
+        and response_data["id"] > 0
+    )
 
-    # Check that an ID is returned and it is a positive integer
-    assert "id" in response_data
-    assert isinstance(response_data["id"], int)
-    assert response_data["id"] > 0
+
+def test_member_creation_duplicate_phone_number(
+    test_client: TestClient, db_session: Session
+) -> None:
+    """Validates that isn't possible to add a new member with a duplicate
+    phone number via POST request.
+    """
+    # Arrange
+    member_data = generate_unique_member()
+    duplicate_number = {
+        "name": "Duplicate phone",
+        "phone": member_data["phone"],
+        "club": "Rotary Club of Guarulhos",
+    }
+
+    # Act
+    response1 = test_client.post("/api/members", json=member_data)
+    response2 = test_client.post("/api/members", json=duplicate_number)
+
+    # Assert
+    assert response1.status_code == 200
+
+    assert response2.status_code == 400
+    # Allow flexibility in key name by checking both possibilities
+    error_message = response2.json().get("detail") or response2.json().get("message")
+    assert error_message == "Phone number already exists"

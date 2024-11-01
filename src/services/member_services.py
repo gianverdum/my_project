@@ -3,7 +3,7 @@ import logging
 from typing import List, Optional
 
 from fastapi import HTTPException
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from src.models.member import Member
@@ -33,6 +33,10 @@ def create_member(db: Session, member_data: MemberCreate) -> MemberRead:
         db.commit()
         db.refresh(db_member)
         return MemberRead.model_validate(db_member)
+    except IntegrityError as e:
+        if "uq_phone" in str(e.orig):
+            raise HTTPException(status_code=400, detail="Phone number already exists")
+        raise HTTPException(status_code=500, detail="Database integrity error ocurred")
     except SQLAlchemyError as e:
         db.rollback()
         logging.error(f"Database error occurred: {str(e)}")
