@@ -90,16 +90,10 @@ def test_member_creation_success(test_client: TestClient, db_session: Session) -
     assert response_data["club"] == member_data["club"]
     assert response_data["name"] == member_data["name"]
     assert response_data["phone"] == member_data["phone"]
-    assert (
-        "id" in response_data
-        and isinstance(response_data["id"], int)
-        and response_data["id"] > 0
-    )
+    assert "id" in response_data and isinstance(response_data["id"], int) and response_data["id"] > 0
 
 
-def test_member_creation_duplicate_phone_number(
-    test_client: TestClient, db_session: Session
-) -> None:
+def test_member_creation_duplicate_phone_number(test_client: TestClient, db_session: Session) -> None:
     """Validates that isn't possible to add a new member with a duplicate
     phone number via POST request.
     """
@@ -122,3 +116,39 @@ def test_member_creation_duplicate_phone_number(
     # Allow flexibility in key name by checking both possibilities
     error_message = response2.json().get("detail") or response2.json().get("message")
     assert error_message == "Phone number already exists"
+
+
+def test_member_creation_missing_required_fields(test_client: TestClient, db_session: Session) -> None:
+    """Validates that it's not possible to add a new member with a missing required field via POST request."""
+
+    # Arrange
+    missing_name = {
+        "phone": "phone",
+        "club": "Rotary Club of Guarulhos",
+    }
+    missing_phone = {
+        "name": "Duplicate phone",
+        "club": "Rotary Club of Guarulhos",
+    }
+    missing_club = {
+        "name": "Duplicate phone",
+        "phone": "phone",
+    }
+
+    # Act
+    response1 = test_client.post("/api/members", json=missing_name)
+    response2 = test_client.post("/api/members", json=missing_phone)
+    response3 = test_client.post("/api/members", json=missing_club)
+
+    # Assert
+    assert response1.status_code == 422
+    assert response1.json().get("detail")[0]["msg"] == "Field required"
+    assert response1.json().get("detail")[0]["loc"] == ["body", "name"]
+
+    assert response2.status_code == 422
+    assert response2.json().get("detail")[0]["msg"] == "Field required"
+    assert response2.json().get("detail")[0]["loc"] == ["body", "phone"]
+
+    assert response3.status_code == 422
+    assert response3.json().get("detail")[0]["msg"] == "Field required"
+    assert response3.json().get("detail")[0]["loc"] == ["body", "club"]

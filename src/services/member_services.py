@@ -27,6 +27,7 @@ def create_member(db: Session, member_data: MemberCreate) -> MemberRead:
     Raises:
         HTTPException: If there is a database error or any unexpected issue.
     """
+
     try:
         db_member = Member(**member_data.model_dump())
         db.add(db_member)
@@ -89,9 +90,7 @@ def get_member_by_id(db: Session, member_id: int) -> Optional[MemberRead]:
         raise HTTPException(status_code=500, detail="Unexpected server error")
 
 
-def update_member(
-    db: Session, member_id: int, updated_data: MemberUpdate
-) -> Optional[MemberRead]:
+def update_member(db: Session, member_id: int, updated_data: MemberUpdate) -> Optional[MemberRead]:
     """
     Updates an existing member's information.
 

@@ -6,13 +6,7 @@ from sqlalchemy.orm import Session
 
 from src.database import get_db
 from src.schemas.member import MemberCreate, MemberRead, MemberUpdate
-from src.services.member_services import (
-    create_member,
-    delete_member,
-    get_member_by_id,
-    get_members,
-    update_member,
-)
+from src.services.member_services import create_member, delete_member, get_member_by_id, get_members, update_member
 
 router = APIRouter()
 
@@ -52,9 +46,7 @@ def add_member(member: MemberCreate, db: Session = Depends(get_db)) -> MemberRea
         pagination.",
     tags=["Members"],
 )
-def list_members(
-    skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
-) -> list[MemberRead]:
+def list_members(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)) -> list[MemberRead]:
     """
     Retrieve a list of members from the database.
 
@@ -110,9 +102,7 @@ def get_member(id: int, db: Session = Depends(get_db)) -> MemberRead:
     description="Modify the details of an existing member.",
     tags=["Members"],
 )
-def modify_member(
-    id: int, updated_member: MemberUpdate, db: Session = Depends(get_db)
-) -> MemberRead:
+def modify_member(id: int, updated_member: MemberUpdate, db: Session = Depends(get_db)) -> MemberRead:
     """
     Update an existing member's information.
 
