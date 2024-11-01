@@ -1,4 +1,3 @@
-# src/main.py
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,6 +24,26 @@ app = FastAPI(
         },
     ],
 )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """
+    Handles HTTP exceptions across the application,\
+        returning a JSON error response.
+
+    Args:
+        request (Request): The incoming request.
+        exc (HTTPException): The HTTP exception raised.
+
+    Returns:
+        JSONResponse: JSON response with error details.
+    """
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"message": exc.detail},
+    )
+
 
 # CORS middleware
 app.add_middleware(
@@ -62,23 +81,3 @@ def read_root() -> dict[str, str]:
 
 # Include routers
 app.include_router(member_router, prefix="/api", tags=["members"])
-
-
-# Global exception handler for HTTP exceptions
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    """
-    Handles HTTP exceptions across the application,\
-        returning a JSON error response.
-
-    Args:
-        request (Request): The incoming request.
-        exc (HTTPException): The HTTP exception raised.
-
-    Returns:
-        JSONResponse: JSON response with error details.
-    """
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"message": exc.detail},
-    )

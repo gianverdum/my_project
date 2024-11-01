@@ -85,7 +85,7 @@ def test_member_creation_success(test_client: TestClient, db_session: Session) -
     response = test_client.post("/api/members/", json=member_data)
 
     # Assert
-    assert response.status_code == 200
+    assert response.status_code == 201
     response_data = response.json()
     assert response_data["club"] == member_data["club"]
     assert response_data["name"] == member_data["name"]
@@ -110,7 +110,7 @@ def test_member_creation_duplicate_phone_number(test_client: TestClient, db_sess
     response2 = test_client.post("/api/members", json=duplicate_number)
 
     # Assert
-    assert response1.status_code == 200
+    assert response1.status_code == 201
 
     assert response2.status_code == 400
     # Allow flexibility in key name by checking both possibilities
@@ -201,3 +201,124 @@ def test_member_creation_empty_club(test_client: TestClient, db_session: Session
     assert response.status_code == 422
     details = response.json().get("detail")
     assert any("club" in error["loc"] and "Club field must not be empty" in error["msg"] for error in details)
+
+
+def test_get_members_success(test_client: TestClient, db_session: Session) -> None:
+    """Validates that the API can retrieve a list of members successfully."""
+    # Arrange
+    member_data1 = generate_unique_member()
+    member_data2 = generate_unique_member()
+
+    test_client.post("/api/members/", json=member_data1)
+    test_client.post("/api/members/", json=member_data2)
+
+    # Act
+    response = test_client.get("/api/members/")
+
+    # Assert
+    assert response.status_code == 200
+    response_data = response.json()
+    assert isinstance(response_data, list)
+    assert len(response_data) >= 2  # Ensure at least 2 members are returned
+
+
+def test_get_member_by_id_success(test_client: TestClient, db_session: Session) -> None:
+    """Validates that a specific member can be retrieved by ID."""
+    # Arrange
+    member_data = generate_unique_member()
+    response = test_client.post("/api/members/", json=member_data)
+    member_id = response.json()["id"]
+
+    # Act
+    response = test_client.get(f"/api/members/{member_id}")
+
+    # Assert
+    assert response.status_code == 200
+    response_data = response.json()
+    assert response_data["id"] == member_id
+    assert response_data["name"] == member_data["name"]
+    assert response_data["phone"] == member_data["phone"]
+    assert response_data["club"] == member_data["club"]
+
+
+def test_get_member_by_id_not_found(test_client: TestClient, db_session: Session) -> None:
+    """Validates that trying to retrieve a non-existing member by ID returns a 404 error."""
+    # Act
+    response = test_client.get("/api/members/999")  # Assuming 999 does not exist
+
+    # Assert
+    print(response.content)
+    assert response.status_code == 404
+
+    # Allow flexibility in key name by checking both possibilities
+    error_message = response.json().get("detail") or response.json().get("message")
+    assert error_message == "Member not found"  # This line remains unchanged
+
+
+def test_update_member_success(test_client: TestClient, db_session: Session) -> None:
+    """Validates that a member's data can be updated successfully."""
+    # Arrange
+    member_data = generate_unique_member()
+    response = test_client.post("/api/members/", json=member_data)
+    member_id = response.json()["id"]
+
+    updated_data = {"name": "Updated Name", "phone": "11987654321", "club": "Updated Club"}
+
+    # Act
+    response = test_client.put(f"/api/members/{member_id}", json=updated_data)
+
+    # Assert
+    assert response.status_code == 200
+    response_data = response.json()
+    assert response_data["id"] == member_id
+    assert response_data["name"] == updated_data["name"]
+    assert response_data["phone"] == updated_data["phone"]
+    assert response_data["club"] == updated_data["club"]
+
+
+def test_update_member_not_found(test_client: TestClient, db_session: Session) -> None:
+    """Validates that trying to update a non-existing member returns a 404 error."""
+    # Act
+    response = test_client.put("/api/members/999", json={"name": "Some Name"})
+
+    # Assert
+    print(response.content)
+    assert response.status_code == 404
+
+    # Allow flexibility in key name by checking both possibilities
+    error_message = response.json().get("detail") or response.json().get("message")
+    assert error_message == "Member not found"
+
+
+def test_delete_member_success(test_client: TestClient, db_session: Session) -> None:
+    """Validates that a member can be deleted successfully."""
+    # Arrange
+    member_data = generate_unique_member()
+    response = test_client.post("/api/members/", json=member_data)
+    member_id = response.json()["id"]
+
+    # Act
+    response = test_client.delete(f"/api/members/{member_id}")
+
+    # Assert
+    print(response.content)
+    assert response.status_code == 204
+
+    # Confirm that the member no longer exists
+    response = test_client.get(f"/api/members/{member_id}")
+    print(response.content)
+    assert response.status_code == 404
+
+
+def test_delete_member_not_found(test_client: TestClient, db_session: Session) -> None:
+    """Validates that trying to delete a non-existing member returns a 404 error."""
+    # Act
+    response = test_client.delete("/api/members/999")  # Assuming 999 does not exist
+
+    # Assert
+    print(response.content)
+    assert response.status_code == 404
+
+    # Allow flexibility in key name by checking both possibilities
+    error_message = response.json().get("detail") or response.json().get("message")
+    assert error_message == "Member not found"
