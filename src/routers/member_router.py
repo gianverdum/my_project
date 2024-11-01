@@ -1,18 +1,12 @@
 # src/routers/member_router.py
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from src.database import get_db
 from src.schemas.member import MemberCreate, MemberRead, MemberUpdate
-from src.services.member_services import (
-    create_member,
-    delete_member,
-    get_member_by_id,
-    get_members,
-    update_member,
-)
+from src.services.member_services import create_member, delete_member, get_member_by_id, get_members, update_member
 
 router = APIRouter()
 
@@ -22,6 +16,7 @@ logging.basicConfig(level=logging.INFO)
 @router.post(
     "/members/",
     response_model=MemberRead,
+    status_code=status.HTTP_201_CREATED,
     summary="Create a new member",
     description="This endpoint allows you to create a \
         new member in the database",
@@ -47,14 +42,13 @@ def add_member(member: MemberCreate, db: Session = Depends(get_db)) -> MemberRea
 @router.get(
     "/members/",
     response_model=list[MemberRead],
+    status_code=status.HTTP_200_OK,
     summary="Retrieve a list of members",
     description="Fetch a list of members with optional\
         pagination.",
     tags=["Members"],
 )
-def list_members(
-    skip: int = 0, limit: int = 10, db: Session = Depends(get_db)
-) -> list[MemberRead]:
+def list_members(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)) -> list[MemberRead]:
     """
     Retrieve a list of members from the database.
 
@@ -78,6 +72,7 @@ def list_members(
 @router.get(
     "/members/{id}",
     response_model=MemberRead,
+    status_code=status.HTTP_200_OK,
     summary="Retrieve a specific member by ID",
     description="Fetch a member's details using their\
         unique ID.",
@@ -106,13 +101,12 @@ def get_member(id: int, db: Session = Depends(get_db)) -> MemberRead:
 @router.put(
     "/members/{id}",
     response_model=MemberRead,
+    status_code=status.HTTP_200_OK,
     summary="Update an existing member's information",
     description="Modify the details of an existing member.",
     tags=["Members"],
 )
-def modify_member(
-    id: int, updated_member: MemberUpdate, db: Session = Depends(get_db)
-) -> MemberRead:
+def modify_member(id: int, updated_member: MemberUpdate, db: Session = Depends(get_db)) -> MemberRead:
     """
     Update an existing member's information.
 
@@ -135,7 +129,7 @@ def modify_member(
 
 @router.delete(
     "/members/{id}",
-    status_code=204,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a member",
     description="Remove a member from the database using\
         their ID.",

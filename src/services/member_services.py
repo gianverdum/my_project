@@ -3,7 +3,7 @@ import logging
 from typing import List, Optional
 
 from fastapi import HTTPException
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from src.models.member import Member
@@ -14,25 +14,17 @@ logging.basicConfig(level=logging.INFO)
 
 
 def create_member(db: Session, member_data: MemberCreate) -> MemberRead:
-    """
-    Inserts a new member into the database.
-
-    Args:
-        db (Session): The active SQLAlchemy session.
-        member_data (MemberCreate): Data required to create the member.
-
-    Returns:
-        MemberRead: The created member object.
-
-    Raises:
-        HTTPException: If there is a database error or any unexpected issue.
-    """
+    """Inserts a new member into the database."""
     try:
         db_member = Member(**member_data.model_dump())
         db.add(db_member)
         db.commit()
         db.refresh(db_member)
         return MemberRead.model_validate(db_member)
+    except IntegrityError as e:
+        if "uq_phone" in str(e.orig):
+            raise HTTPException(status_code=400, detail="Phone number already exists")
+        raise HTTPException(status_code=500, detail="Database integrity error occurred")
     except SQLAlchemyError as e:
         db.rollback()
         logging.error(f"Database error occurred: {str(e)}")
@@ -43,20 +35,7 @@ def create_member(db: Session, member_data: MemberCreate) -> MemberRead:
 
 
 def get_members(db: Session, skip: int = 0, limit: int = 10) -> List[MemberRead]:
-    """
-    Retrieves a list of members with pagination.
-
-    Args:
-        db (Session): Database session used to perform operations.
-        skip (int): The number of records to skip, used for pagination.
-        limit (int): The maximum number of records to retrieve.
-
-    Returns:
-        List[MemberRead]: List of member records.
-
-    Raises:
-        HTTPException: If an unexpected error occurs.
-    """
+    """Retrieves a list of members with pagination."""
     try:
         return db.query(Member).offset(skip).limit(limit).all()
     except Exception as e:
@@ -66,51 +45,40 @@ def get_members(db: Session, skip: int = 0, limit: int = 10) -> List[MemberRead]
 
 def get_member_by_id(db: Session, member_id: int) -> Optional[MemberRead]:
     """
-    Retrieves a member by their ID.
+    Retrieve a member by their ID.
 
     Args:
-        db (Session): Database session used to perform operations.
-        member_id (int): The unique identifier of the member.
+        db (Session): The database session to use for the query.
+        member_id (int): The ID of the member to retrieve.
 
     Returns:
-        Optional[MemberRead]: The member data if found, otherwise None.
+        Optional[MemberRead]: The member record if found; otherwise, raises HTTPException with a 404 status code.
 
     Raises:
-        HTTPException: If an unexpected error occurs.
+        HTTPException: If the member is not found (404) or if a database error occurs (500).
     """
     try:
-        return db.query(Member).filter(Member.id == member_id).first()
-    except Exception as e:
-        logging.error(f"Unexpected error occurred: {str(e)}")
-        raise HTTPException(status_code=500, detail="Unexpected server error")
+        member = db.query(Member).filter(Member.id == member_id).one_or_none()
+        if member is None:
+            raise HTTPException(status_code=404, detail="Member not found")
+        return member
+    except SQLAlchemyError as e:
+        logging.error(f"Database error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="Database error occurred")
 
 
-def update_member(
-    db: Session, member_id: int, updated_data: MemberUpdate
-) -> Optional[MemberRead]:
-    """
-    Updates an existing member's information.
-
-    Args:
-        db (Session): Database session used to perform operations.
-        member_id (int): The unique identifier of the member.
-        updated_data (MemberUpdate): The data to update the member with.
-
-    Returns:
-        Optional[MemberRead]: The updated member's data if found, \
-            otherwise None.
-
-    Raises:
-        HTTPException: If a database or other unexpected error occurs.
-    """
+def update_member(db: Session, member_id: int, updated_data: MemberUpdate) -> Optional[MemberRead]:
+    """Updates an existing member's information."""
     try:
         member = get_member_by_id(db, member_id)
-        if member:
-            for key, value in updated_data.model_dump().items():
-                setattr(member, key, value)
-            db.commit()
-            db.refresh(member)
+        for key, value in updated_data.model_dump().items():
+            setattr(member, key, value)
+        db.commit()
+        db.refresh(member)
         return member
+    except HTTPException:
+        # Already handled in get_member_by_id
+        raise
     except SQLAlchemyError as e:
         db.rollback()
         logging.error(f"Database error occurred: {str(e)}")
@@ -121,26 +89,15 @@ def update_member(
 
 
 def delete_member(db: Session, member_id: int) -> bool:
-    """
-    Deletes a member from the database.
-
-    Args:
-        db (Session): Database session used to perform operations.
-        member_id (int): The unique identifier of the member.
-
-    Returns:
-        bool: True if the member was deleted, otherwise False.
-
-    Raises:
-        HTTPException: If a database or other unexpected error occurs.
-    """
+    """Deletes a member from the database."""
     try:
         member = get_member_by_id(db, member_id)
-        if member:
-            db.delete(member)
-            db.commit()
-            return True
-        return False
+        db.delete(member)
+        db.commit()
+        return True
+    except HTTPException:
+        # Already handled in get_member_by_id
+        raise
     except SQLAlchemyError as e:
         db.rollback()
         logging.error(f"Database error occurred: {str(e)}")
