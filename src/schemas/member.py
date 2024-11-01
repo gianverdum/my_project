@@ -1,7 +1,7 @@
 # src/schemas/member.py
 from typing import Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class MemberCreate(BaseModel):
@@ -9,14 +9,15 @@ class MemberCreate(BaseModel):
     phone: str
     club: str
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "John Doe",
                 "phone": "11912345678",
                 "club": "Rotary Club of City",
             }
         }
+    )
 
     @field_validator("name")
     def name_must_contain_first_and_last(cls, v: str) -> str:
@@ -46,15 +47,16 @@ class MemberRead(BaseModel):
     phone: str
     club: str
 
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "name": "John Doe",
                 "phone": "11912345678",
                 "club": "Rotary Club of City",
             }
-        }
+        },
+    )
 
 
 class MemberUpdate(BaseModel):
@@ -62,11 +64,12 @@ class MemberUpdate(BaseModel):
     phone: Optional[str] = None
     club: Optional[str] = None
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "John Doe",
                 "phone": "11912345678",
                 "club": "Rotary Club of City",
             }
         }
+    )
